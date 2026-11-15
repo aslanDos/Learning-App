@@ -1,17 +1,63 @@
-# learningapp
+# Flutter: изучаем widgets
 
-A new Flutter project.
+Каждую тему разбираем отдельно: концепт → работающий пример → эксперимент → обсуждение.
+Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/01-layout`.
 
-## Getting Started
+Запуск: `flutter run`. Если приложение уже запущено после смены ветки, сделай hot restart.
 
-This project is a starting point for a Flutter application.
+## 01. Layout
 
-A few resources to get you started if this is your first Flutter project:
+Подробный [конспект урока](notes/01-layout.md): понятия, примеры, частые ошибки и практика.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Layout определяет размеры и расположение элементов. Главная схема:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Родитель передаёт ребёнку ограничения размера.
+2. Ребёнок выбирает размер в допустимых пределах и сообщает его родителю.
+3. Родитель определяет положение ребёнка.
+
+В `lib/main.dart` находится интерактивный пример. Меняй выравнивание,
+размер синего блока и отступы. Код под примером обновляется вместе с настройками.
+
+Дерево примера (декоративные фоны и подпись пропущены):
+
+```text
+SizedBox(height: 240)       область примера
+└── Padding                отступ со всех сторон
+    └── Align              расположение в оставшейся области
+        └── SizedBox       желаемый размер ребёнка
+            └── ColoredBox цветной блок
+```
+
+`Center(child: ...)` соответствует `Align(alignment: Alignment.center, child: ...)`.
+Заданный размер не гарантирован: родитель может ограничить его. Это тема следующего урока.
+
+### Эксперименты
+
+1. Выбери «Слева сверху», установи отступ 0, затем 40. Что изменилось?
+2. Повтори с выравниванием по центру. Почему положение центра сохранилось?
+3. Поменяй размер блока с 48 до 120. Какая точка остаётся на месте при каждом выравнивании?
+4. В коде замени `Align` на `Center`, убрав параметр `alignment`.
+
+Разбор: симметричный padding уменьшает доступную область с двух сторон одинаково,
+поэтому её центр сохраняется. При выравнивании в угол ребёнок следует за краем
+внутренней области. При изменении размера на месте остаётся выбранный угол или центр.
+
+Источник: [Flutter — Understanding constraints](https://docs.flutter.dev/ui/layout/constraints).
+
+## Порядок тем
+
+1. Layout — `lesson/01-layout`
+2. Constraints
+3. Rows, Columns, Stack
+4. Flex
+5. Scrolling
+6. Lists & Grids
+7. Forms & Inputs
+8. Navigation
+9. Dialogs, Bottom Sheets
+10. Animations
+11. Images & Assets
+12. Responsive UI
+13. Slivers
+
+Следующий урок создаём отдельной веткой после обсуждения текущего.
