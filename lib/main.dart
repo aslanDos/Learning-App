@@ -9,79 +9,115 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => const MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Learning App',
-    home: LayoutLessonScreen(),
+    home: ConstraintsLessonScreen(),
   );
 }
 
-class LayoutLessonScreen extends StatefulWidget {
-  const LayoutLessonScreen({super.key});
+enum ConstraintMode { loose, tight, bounded }
+
+class ConstraintsLessonScreen extends StatefulWidget {
+  const ConstraintsLessonScreen({super.key});
 
   @override
-  State<LayoutLessonScreen> createState() => _LayoutLessonScreenState();
+  State<ConstraintsLessonScreen> createState() =>
+      _ConstraintsLessonScreenState();
 }
 
-class _LayoutLessonScreenState extends State<LayoutLessonScreen> {
-  double _size = 80;
-  double _padding = 16;
-  Alignment _alignment = Alignment.center;
+class _ConstraintsLessonScreenState extends State<ConstraintsLessonScreen> {
+  ConstraintMode _mode = ConstraintMode.loose;
+  double _requestedSize = 120;
 
-  static const _positions = {
-    'Слева сверху': Alignment.topLeft,
-    'По центру': Alignment.center,
-    'Справа снизу': Alignment.bottomRight,
+  BoxConstraints get _constraints => switch (_mode) {
+    ConstraintMode.loose => BoxConstraints.loose(const Size(200, 160)),
+    ConstraintMode.tight => const BoxConstraints.tightFor(
+      width: 200,
+      height: 160,
+    ),
+    ConstraintMode.bounded => const BoxConstraints(
+      minWidth: 80,
+      maxWidth: 200,
+      minHeight: 80,
+      maxHeight: 160,
+    ),
   };
 
-  String get _alignmentCode => switch (_alignment) {
-    Alignment.topLeft => 'Alignment.topLeft',
-    Alignment.bottomRight => 'Alignment.bottomRight',
-    _ => 'Alignment.center',
+  String get _constraintsCode => switch (_mode) {
+    ConstraintMode.loose => 'BoxConstraints.loose(Size(200, 160))',
+    ConstraintMode.tight =>
+      'BoxConstraints.tightFor(\n    width: 200, height: 160,\n  )',
+    ConstraintMode.bounded =>
+      'BoxConstraints(\n    minWidth: 80, maxWidth: 200,\n'
+          '    minHeight: 80, maxHeight: 160,\n  )',
   };
 
   @override
   Widget build(BuildContext context) {
+    final limits = _constraints;
     return Scaffold(
-      appBar: AppBar(title: const Text('01 · Layout')),
+      appBar: AppBar(title: const Text('02 · Constraints')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Как виджет получает размер и место',
+              'Почему width не всегда работает?',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
             const Text(
-              'Родитель передаёт ограничения → ребёнок выбирает размер '
-              'в этих пределах → родитель размещает ребёнка. '
-              'Размеры во Flutter измеряются в логических пикселях.',
+              'Родитель задаёт диапазон размеров. Ребёнок может выбрать '
+              'только размер внутри него. Попробуй запросить 40, 120 и 240 '
+              'в каждом режиме.',
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Попробуй: перемести синий блок в угол, затем увеличь отступ.',
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final entry in const {
+                  ConstraintMode.loose: 'Loose',
+                  ConstraintMode.tight: 'Tight',
+                  ConstraintMode.bounded: 'Min + Max',
+                }.entries)
+                  ChoiceChip(
+                    label: Text(entry.value),
+                    selected: _mode == entry.key,
+                    onSelected: (_) => setState(() => _mode = entry.key),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
-            // Оранжевый фон показывает пространство, занятое Padding.
-            SizedBox(
-              height: 240,
-              child: ColoredBox(
-                color: const Color(0xFFFFE0B2),
-                child: Padding(
-                  padding: EdgeInsets.all(_padding),
-                  child: ColoredBox(
-                    color: const Color(0xFFECEFF1),
-                    // Align занимает доступную область и размещает ребёнка.
-                    child: Align(
-                      alignment: _alignment,
+            Text(
+              'Допустимая ширина: ${limits.minWidth.round()}…${limits.maxWidth.round()}\n'
+              'Допустимая высота: ${limits.minHeight.round()}…${limits.maxHeight.round()}',
+            ),
+            const SizedBox(height: 12),
+            // Center даёт области примера возможность быть меньше ширины списка.
+            Center(
+              child: SizedBox.square(
+                dimension: 240,
+                child: ColoredBox(
+                  color: const Color(0xFFECEFF1),
+                  child: Center(
+                    // Этот родитель задаёт ограничения для SizedBox ниже.
+                    child: ConstrainedBox(
+                      constraints: limits,
                       child: SizedBox(
-                        width: _size,
-                        height: _size,
-                        child: const ColoredBox(
-                          key: ValueKey('demo-box'),
-                          color: Color(0xFF1565C0),
-                          child: Center(
-                            child: Text(
-                              'child',
-                              style: TextStyle(color: Colors.white),
+                        width: _requestedSize,
+                        height: _requestedSize,
+                        child: ColoredBox(
+                          key: const ValueKey('demo-box'),
+                          color: const Color(0xFF1565C0),
+                          // Здесь ограничения уже отражают реальный размер блока.
+                          child: LayoutBuilder(
+                            builder: (context, actual) => Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '${actual.maxWidth.round()} × ${actual.maxHeight.round()}',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -92,74 +128,50 @@ class _LayoutLessonScreenState extends State<LayoutLessonScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('Оранжевый — отступ. Серый — область для выравнивания.'),
+            const Text('Числа внутри синего блока — его фактический размер.'),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final position in _positions.entries)
-                  ChoiceChip(
-                    label: Text(position.key),
-                    selected: _alignment == position.value,
-                    onSelected: (_) {
-                      setState(() => _alignment = position.value);
-                    },
-                  ),
-              ],
+            Text(
+              'Запрос SizedBox: ${_requestedSize.round()} × ${_requestedSize.round()}',
             ),
-            Text('Размер блока: ${_size.round()} × ${_size.round()}'),
             Slider(
-              value: _size,
-              min: 48,
-              max: 120,
-              divisions: 9,
-              label: '${_size.round()}',
-              onChanged: (value) => setState(() => _size = value),
-            ),
-            Text('Отступ: ${_padding.round()}'),
-            Slider(
-              value: _padding,
-              min: 0,
-              max: 40,
+              key: const ValueKey('size-slider'),
+              value: _requestedSize,
+              min: 40,
+              max: 240,
               divisions: 10,
-              label: '${_padding.round()}',
-              onChanged: (value) => setState(() => _padding = value),
+              label: '${_requestedSize.round()}',
+              onChanged: (value) => setState(() => _requestedSize = value),
             ),
-            const SizedBox(height: 12),
+            const Text(
+              'Loose: минимум 0, можно быть меньше максимума.\n'
+              'Tight: минимум равен максимуму, размер уже определён.\n'
+              'Min + Max: можно выбирать размер между заданными границами. '
+              'Это тоже bounded constraints; loose и tight в этом примере '
+              'также имеют конечные максимумы.',
+            ),
+            const SizedBox(height: 20),
             Text('Код примера', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             SelectableText(
-              'SizedBox(\n'
-              '  height: 240,\n'
-              '  child: Padding(\n'
-              '    padding: EdgeInsets.all(${_padding.round()}),\n'
-              '    child: Align(\n'
-              '      alignment: $_alignmentCode,\n'
-              '      child: SizedBox(\n'
-              '        width: ${_size.round()},\n'
-              '        height: ${_size.round()},\n'
-              '        child: ColoredBox(color: Color(0xFF1565C0)),\n'
-              '      ),\n'
-              '    ),\n'
+              'ConstrainedBox(\n'
+              '  constraints: $_constraintsCode,\n'
+              '  child: SizedBox(\n'
+              '    width: ${_requestedSize.round()},\n'
+              '    height: ${_requestedSize.round()},\n'
+              '    child: ColoredBox(color: Colors.blue),\n'
               '  ),\n'
               ')',
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
             ),
-            const Text('Для краткости в коде скрыты фон и подпись блока.'),
-            const SizedBox(height: 20),
             const Text(
-              'Что здесь делает каждый виджет:\n\n'
-              '• SizedBox запрашивает размер в пределах ограничений родителя.\n'
-              '• Padding оставляет отступ внутри своей области.\n'
-              '• Align размещает ребёнка в доступной области.\n'
-              '• Center — частный случай Align с выравниванием по центру.\n'
-              '• ColoredBox рисует фон, чтобы границы были видны.',
+              'В приложении этот фрагмент находится внутри Center в области '
+              '240 × 240. В другом окружении результат может отличаться: '
+              'ConstrainedBox учитывает и ограничения своего родителя.',
             ),
             const SizedBox(height: 20),
             const Text(
-              'Проверь себя: почему при выравнивании по центру одинаковый '
-              'отступ со всех сторон не сдвигает блок? Переключись на угол '
-              'и сравни. Объясни результат через область, которую получает Align.',
+              'Проверь себя: при запросе 240 × 240 во всех трёх режимах '
+              'получается 200 × 160. Почему? А что получится при запросе 40 × 40?',
             ),
           ],
         ),

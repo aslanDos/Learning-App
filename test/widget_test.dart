@@ -3,28 +3,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:learningapp/main.dart';
 
 void main() {
-  testWidgets('Alignment controls move the example and update its code', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MyApp());
+  final block = find.byKey(const ValueKey('demo-box'));
 
-    expect(find.text('01 · Layout'), findsOneWidget);
-    final block = find.byKey(const ValueKey('demo-box'));
-    final centeredPosition = tester.getTopLeft(block);
+  Future<void> requestSize(WidgetTester tester, {required bool maximum}) async {
+    final slider = find.byKey(const ValueKey('size-slider'));
+    await tester.drag(slider, Offset(maximum ? 1000 : -1000, 0));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Constraints restrict the requested size in each mode', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MyApp());
+    expect(tester.getSize(block), const Size(120, 120));
+
+    await tester.tap(find.text('Tight'));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(block), const Size(200, 160));
+
+    await requestSize(tester, maximum: false);
+    expect(find.text('Запрос SizedBox: 40 × 40'), findsOneWidget);
+    expect(tester.getSize(block), const Size(200, 160));
+
+    await tester.tap(find.text('Min + Max'));
+    await tester.pumpAndSettle();
     expect(tester.getSize(block), const Size(80, 80));
 
-    await tester.tap(find.text('Слева сверху'));
+    await tester.tap(find.text('Loose'));
     await tester.pumpAndSettle();
+    expect(tester.getSize(block), const Size(40, 40));
 
-    final cornerPosition = tester.getTopLeft(block);
-    expect(cornerPosition.dx, lessThan(centeredPosition.dx));
-    expect(cornerPosition.dy, lessThan(centeredPosition.dy));
-    await tester.scrollUntilVisible(find.byType(SelectableText), 200);
-    expect(find.textContaining('alignment: Alignment.topLeft'), findsOneWidget);
+    await requestSize(tester, maximum: true);
+    expect(find.text('Запрос SizedBox: 240 × 240'), findsOneWidget);
+    expect(tester.getSize(block), const Size(200, 160));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Lesson fits a narrow phone and remains scrollable', (
+  testWidgets('Lesson remains readable and scrollable on a narrow phone', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 568);
@@ -35,10 +54,9 @@ void main() {
     await tester.pumpWidget(const MyApp());
     await tester.scrollUntilVisible(
       find.textContaining('Проверь себя:'),
-      300,
+      250,
       scrollable: find.byType(Scrollable).first,
     );
-
     expect(tester.takeException(), isNull);
   });
 }
