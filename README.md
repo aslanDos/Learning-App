@@ -1,15 +1,25 @@
 # Flutter: изучаем widgets
 
 Каждую тему разбираем отдельно: концепт → работающий пример → эксперимент → обсуждение.
-Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/03-row-column-stack`.
+Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/04-flex`.
 
 Запуск: `flutter run`. Если приложение уже запущено после смены ветки, сделай hot restart.
 
-## 03. Row, Column и Stack — текущий урок
+## 04. Flex — текущий урок
+
+Ветка: `lesson/04-flex`. [Конспект](notes/04-flex.md).
+
+Сравни Expanded, Flexible и Spacer. Меняй направление Flex и коэффициент второй доли.
+Внутри цветных блоков показаны фактические размеры; под примером — расчёт долей и код.
+Обрати внимание: неиспользованное место Flexible не передаётся соседнему Expanded автоматически.
+
+Предыдущий пример: `git switch lesson/03-row-column-stack`.
+
+## 03. Row, Column и Stack — предыдущий урок
 
 Ветка: `lesson/03-row-column-stack`. [Конспект](notes/03-row-column-stack.md).
 
-Переключай Row, Column и Stack для одних и тех же трёх блоков.
+В ветке `lesson/03-row-column-stack` переключай Row, Column и Stack для одних и тех же трёх блоков.
 Меняй mainAxisAlignment и crossAxisAlignment; в Stack попробуй порядок слоёв и Positioned.
 Код под примером обновляется вместе с настройками.
 
@@ -70,7 +80,7 @@ SizedBox(height: 240)       область примера
 1. Layout — `lesson/01-layout`
 2. Constraints — `lesson/02-constraints`
 3. Row, Column, Stack — `lesson/03-row-column-stack`
-4. Flex
+4. Flex — `lesson/04-flex`
 5. Scrolling
 6. Lists & Grids
 7. Forms & Inputs

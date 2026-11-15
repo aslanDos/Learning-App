@@ -12,68 +12,55 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
-  testWidgets('Row and Column change axes and distribute free space', (
+  testWidgets(
+    'Expanded shares remaining space; Flexible may leave unused space',
+    (tester) async {
+      useTallScreen(tester);
+      await tester.pumpWidget(const MyApp());
+      expect(tester.getSize(block('A')), const Size(48, 48));
+      expect(tester.getSize(block('B')), const Size(64, 40));
+      expect(tester.getSize(block('C')), const Size(128, 48));
+
+      await tester.tap(find.text('Flexible'));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(block('B')), const Size(40, 40));
+      expect(tester.getSize(block('C')), const Size(128, 48));
+      final area = tester.getRect(find.byKey(const ValueKey('demo-area')));
+      expect(area.right - tester.getTopRight(block('C')).dx, 24);
+
+      await tester.tap(find.text('Вертикально'));
+      await tester.pumpAndSettle();
+      expect(tester.getSize(block('B')), const Size(40, 40));
+      expect(tester.getSize(block('C')), const Size(48, 128));
+      expect(area.bottom - tester.getBottomLeft(block('C')).dy, 24);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Flex factor changes shares and Spacer distributes empty gaps', (
     tester,
   ) async {
     useTallScreen(tester);
     await tester.pumpWidget(const MyApp());
-    final area = tester.getRect(find.byKey(const ValueKey('demo-area')));
-    expect(tester.getTopLeft(block('B')).dx, tester.getTopRight(block('A')).dx);
-    expect(tester.getCenter(block('A')).dy, area.center.dy);
-
-    await tester.tap(find.text('spaceBetween'));
-    await tester.pumpAndSettle();
-    expect(tester.getTopRight(block('C')).dx, area.right);
-    expect(
-      tester.getTopLeft(block('B')).dx,
-      greaterThan(tester.getTopRight(block('A')).dx),
+    await tester.drag(
+      find.byKey(const ValueKey('flex-slider')),
+      const Offset(1000, 0),
     );
+    await tester.pumpAndSettle();
+    expect(tester.getSize(block('B')).width, 48);
+    expect(tester.getSize(block('C')).width, 144);
 
-    await tester.tap(find.text('Column'));
+    await tester.tap(find.text('Spacer'));
     await tester.pumpAndSettle();
-    expect(tester.getBottomLeft(block('C')).dy, area.bottom);
-    expect(
-      tester.getTopLeft(block('B')).dy,
-      greaterThan(tester.getBottomLeft(block('A')).dy),
-    );
-
-    await tester.tap(find.byKey(const ValueKey('cross-end')));
-    await tester.pumpAndSettle();
-    expect(tester.getTopRight(block('A')).dx, area.right);
-    expect(tester.getTopRight(block('B')).dx, area.right);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('Stack layers overlap and Positioned anchors C independently', (
-    tester,
-  ) async {
-    useTallScreen(tester);
-    await tester.pumpWidget(const MyApp());
-    await tester.tap(find.text('Stack'));
-    await tester.pumpAndSettle();
-    final area = tester.getRect(find.byKey(const ValueKey('demo-area')));
-    expect(tester.getTopLeft(block('A')), area.topLeft);
-    expect(tester.getTopLeft(block('B')), area.topLeft);
-
-    await tester.tap(find.text('C через Positioned'));
-    await tester.pumpAndSettle();
-    final anchored = tester.getTopRight(block('C'));
-    expect(anchored, area.topRight + const Offset(-16, 16));
-    await tester.tap(find.text('bottomRight'));
-    await tester.pumpAndSettle();
-    expect(tester.getTopRight(block('C')), anchored);
-    expect(tester.getBottomRight(block('A')), area.bottomRight);
-
-    await tester.tap(find.text('Поменять слои A и B'));
-    await tester.pumpAndSettle();
-    final stack = tester.widget<Stack>(
-      find.descendant(
-        of: find.byKey(const ValueKey('demo-area')),
-        matching: find.byType(Stack),
-      ),
-    );
-    expect((stack.children.first as DemoBlock).id, 'B');
-    expect((stack.children[1] as DemoBlock).id, 'A');
+    expect(tester.getSize(block('A')), const Size(48, 48));
+    expect(tester.getSize(block('B')), const Size(40, 40));
+    expect(tester.getSize(block('C')), const Size(48, 48));
+    final firstGap =
+        tester.getTopLeft(block('B')).dx - tester.getTopRight(block('A')).dx;
+    final secondGap =
+        tester.getTopLeft(block('C')).dx - tester.getTopRight(block('B')).dx;
+    expect(firstGap, closeTo(26, 0.01));
+    expect(secondGap, closeTo(78, 0.01));
     expect(tester.takeException(), isNull);
   });
 
@@ -85,10 +72,36 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MyApp());
-    for (final mode in ['Column', 'Stack']) {
+    for (final mode in ['Expanded', 'Flexible', 'Spacer']) {
+      await tester.scrollUntilVisible(
+        find.text(mode),
+        -100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text(mode));
       await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
+      for (final axis in ['Вертикально', 'Горизонтально']) {
+        await tester.scrollUntilVisible(
+          find.text(axis),
+          axis == 'Вертикально' ? 100 : -100,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(axis));
+        await tester.pumpAndSettle();
+        final demo = tester.widget<Flex>(
+          find.descendant(
+            of: find.byKey(const ValueKey('demo-area')),
+            matching: find.byType(Flex),
+          ),
+        );
+        expect(
+          demo.direction,
+          axis == 'Вертикально' ? Axis.vertical : Axis.horizontal,
+        );
+        expect(tester.takeException(), isNull);
+      }
     }
     await tester.scrollUntilVisible(
       find.textContaining('Проверь себя:'),
