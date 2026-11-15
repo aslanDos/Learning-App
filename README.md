@@ -1,15 +1,25 @@
 # Flutter: изучаем widgets
 
 Каждую тему разбираем отдельно: концепт → работающий пример → эксперимент → обсуждение.
-Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/02-constraints`.
+Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/03-row-column-stack`.
 
 Запуск: `flutter run`. Если приложение уже запущено после смены ветки, сделай hot restart.
 
-## 02. Constraints — текущий урок
+## 03. Row, Column и Stack — текущий урок
+
+Ветка: `lesson/03-row-column-stack`. [Конспект](notes/03-row-column-stack.md).
+
+Переключай Row, Column и Stack для одних и тех же трёх блоков.
+Меняй mainAxisAlignment и crossAxisAlignment; в Stack попробуй порядок слоёв и Positioned.
+Код под примером обновляется вместе с настройками.
+
+Предыдущие примеры сохранены в ветках `lesson/01-layout` и `lesson/02-constraints`.
+
+## 02. Constraints — предыдущий урок
 
 Ветка: `lesson/02-constraints`. [Конспект](notes/02-constraints.md).
 
-В приложении сравниваем Loose, Tight и диапазон Min + Max.
+В ветке `lesson/02-constraints` сравниваем Loose, Tight и диапазон Min + Max.
 Ползунок меняет запрошенный размер; числа в синем блоке показывают фактический.
 Попробуй запросы 40, 120 и 240 в каждом режиме и объясни различия.
 
@@ -59,7 +69,7 @@ SizedBox(height: 240)       область примера
 
 1. Layout — `lesson/01-layout`
 2. Constraints — `lesson/02-constraints`
-3. Rows, Columns, Stack
+3. Row, Column, Stack — `lesson/03-row-column-stack`
 4. Flex
 5. Scrolling
 6. Lists & Grids

@@ -9,173 +9,250 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => const MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Learning App',
-    home: ConstraintsLessonScreen(),
+    home: LayoutGroupLessonScreen(),
   );
 }
 
-enum ConstraintMode { loose, tight, bounded }
+enum DemoLayout { row, column, stack }
 
-class ConstraintsLessonScreen extends StatefulWidget {
-  const ConstraintsLessonScreen({super.key});
+class LayoutGroupLessonScreen extends StatefulWidget {
+  const LayoutGroupLessonScreen({super.key});
 
   @override
-  State<ConstraintsLessonScreen> createState() =>
-      _ConstraintsLessonScreenState();
+  State<LayoutGroupLessonScreen> createState() =>
+      _LayoutGroupLessonScreenState();
 }
 
-class _ConstraintsLessonScreenState extends State<ConstraintsLessonScreen> {
-  ConstraintMode _mode = ConstraintMode.loose;
-  double _requestedSize = 120;
+class _LayoutGroupLessonScreenState extends State<LayoutGroupLessonScreen> {
+  DemoLayout _layout = DemoLayout.row;
+  MainAxisAlignment _main = MainAxisAlignment.start;
+  CrossAxisAlignment _cross = CrossAxisAlignment.center;
+  Alignment _stackAlignment = Alignment.topLeft;
+  bool _positioned = false;
+  bool _reverse = false;
 
-  BoxConstraints get _constraints => switch (_mode) {
-    ConstraintMode.loose => BoxConstraints.loose(const Size(200, 160)),
-    ConstraintMode.tight => const BoxConstraints.tightFor(
-      width: 200,
-      height: 160,
-    ),
-    ConstraintMode.bounded => const BoxConstraints(
-      minWidth: 80,
-      maxWidth: 200,
-      minHeight: 80,
-      maxHeight: 160,
-    ),
-  };
+  List<Widget> get _blocks => const [
+    DemoBlock(id: 'A', width: 56, height: 40, color: Color(0xFF1565C0)),
+    DemoBlock(id: 'B', width: 72, height: 56, color: Color(0xFFC62828)),
+    DemoBlock(id: 'C', width: 40, height: 72, color: Color(0xFF2E7D32)),
+  ];
 
-  String get _constraintsCode => switch (_mode) {
-    ConstraintMode.loose => 'BoxConstraints.loose(Size(200, 160))',
-    ConstraintMode.tight =>
-      'BoxConstraints.tightFor(\n    width: 200, height: 160,\n  )',
-    ConstraintMode.bounded =>
-      'BoxConstraints(\n    minWidth: 80, maxWidth: 200,\n'
-          '    minHeight: 80, maxHeight: 160,\n  )',
-  };
+  Widget _buildDemo() {
+    final blocks = _blocks;
+    return switch (_layout) {
+      DemoLayout.row => Row(
+        mainAxisAlignment: _main,
+        crossAxisAlignment: _cross,
+        children: blocks,
+      ),
+      DemoLayout.column => Column(
+        mainAxisAlignment: _main,
+        crossAxisAlignment: _cross,
+        children: blocks,
+      ),
+      DemoLayout.stack => Stack(
+        alignment: _stackAlignment,
+        children: [
+          ...(_reverse ? blocks.take(2).toList().reversed : blocks.take(2)),
+          if (_positioned)
+            Positioned(top: 16, right: 16, child: blocks[2])
+          else
+            blocks[2],
+        ],
+      ),
+    };
+  }
+
+  String get _code {
+    const blocks =
+        '    blockA, // 56 × 40\n'
+        '    blockB, // 72 × 56\n'
+        '    blockC, // 40 × 72\n';
+    if (_layout != DemoLayout.stack) {
+      final name = _layout == DemoLayout.row ? 'Row' : 'Column';
+      return '$name(\n'
+          '  mainAxisAlignment: $_main,\n'
+          '  crossAxisAlignment: $_cross,\n'
+          '  children: [\n$blocks  ],\n)';
+    }
+    return 'Stack(\n'
+        '  alignment: $_stackAlignment,\n'
+        '  children: [\n'
+        '    ${_reverse ? 'blockB' : 'blockA'},\n'
+        '    ${_reverse ? 'blockA' : 'blockB'},\n'
+        '${_positioned ? '    Positioned(top: 16, right: 16,\n      child: blockC),\n' : '    blockC,\n'}'
+        '  ],\n)';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final limits = _constraints;
+    final isStack = _layout == DemoLayout.stack;
     return Scaffold(
-      appBar: AppBar(title: const Text('02 · Constraints')),
+      appBar: AppBar(title: const Text('03 · Row, Column, Stack')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(
-              'Почему width не всегда работает?',
+              'Один набор детей — три способа размещения',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
             const Text(
-              'Родитель задаёт диапазон размеров. Ребёнок может выбрать '
-              'только размер внутри него. Попробуй запросить 40, 120 и 240 '
-              'в каждом режиме.',
+              'Row — ряд. Column — столбец. Stack — слои. '
+              'Блоки имеют разные размеры, чтобы было видно выравнивание.',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               children: [
-                for (final entry in const {
-                  ConstraintMode.loose: 'Loose',
-                  ConstraintMode.tight: 'Tight',
-                  ConstraintMode.bounded: 'Min + Max',
-                }.entries)
+                for (final mode in DemoLayout.values)
                   ChoiceChip(
-                    label: Text(entry.value),
-                    selected: _mode == entry.key,
-                    onSelected: (_) => setState(() => _mode = entry.key),
+                    label: Text(switch (mode) {
+                      DemoLayout.row => 'Row',
+                      DemoLayout.column => 'Column',
+                      DemoLayout.stack => 'Stack',
+                    }),
+                    selected: _layout == mode,
+                    onSelected: (_) => setState(() => _layout = mode),
                   ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              'Допустимая ширина: ${limits.minWidth.round()}…${limits.maxWidth.round()}\n'
-              'Допустимая высота: ${limits.minHeight.round()}…${limits.maxHeight.round()}',
-            ),
-            const SizedBox(height: 12),
-            // Center даёт области примера возможность быть меньше ширины списка.
             Center(
               child: SizedBox.square(
                 dimension: 240,
                 child: ColoredBox(
+                  key: const ValueKey('demo-area'),
                   color: const Color(0xFFECEFF1),
-                  child: Center(
-                    // Этот родитель задаёт ограничения для SizedBox ниже.
-                    child: ConstrainedBox(
-                      constraints: limits,
-                      child: SizedBox(
-                        width: _requestedSize,
-                        height: _requestedSize,
-                        child: ColoredBox(
-                          key: const ValueKey('demo-box'),
-                          color: const Color(0xFF1565C0),
-                          // Здесь ограничения уже отражают реальный размер блока.
-                          child: LayoutBuilder(
-                            builder: (context, actual) => Padding(
-                              padding: const EdgeInsets.all(4),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  '${actual.maxWidth.round()} × ${actual.maxHeight.round()}',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: _buildDemo(),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text('Числа внутри синего блока — его фактический размер.'),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              'Запрос SizedBox: ${_requestedSize.round()} × ${_requestedSize.round()}',
+              isStack
+                  ? 'Следующий ребёнок рисуется поверх предыдущего. '
+                        'Сейчас зелёный C — последний слой.'
+                  : _layout == DemoLayout.row
+                  ? 'Главная ось → горизонталь. Поперечная ось ↓ вертикаль.'
+                  : 'Главная ось ↓ вертикаль. Поперечная ось → горизонталь.',
             ),
-            Slider(
-              key: const ValueKey('size-slider'),
-              value: _requestedSize,
-              min: 40,
-              max: 240,
-              divisions: 10,
-              label: '${_requestedSize.round()}',
-              onChanged: (value) => setState(() => _requestedSize = value),
-            ),
-            const Text(
-              'Loose: минимум 0, можно быть меньше максимума.\n'
-              'Tight: минимум равен максимуму, размер уже определён.\n'
-              'Min + Max: можно выбирать размер между заданными границами. '
-              'Это тоже bounded constraints; loose и tight в этом примере '
-              'также имеют конечные максимумы.',
-            ),
+            const SizedBox(height: 12),
+            if (!isStack) ...[
+              const Text('mainAxisAlignment — вдоль главной оси'),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final value in const [
+                    MainAxisAlignment.start,
+                    MainAxisAlignment.center,
+                    MainAxisAlignment.spaceBetween,
+                  ])
+                    ChoiceChip(
+                      label: Text(value.name),
+                      selected: _main == value,
+                      onSelected: (_) => setState(() => _main = value),
+                    ),
+                ],
+              ),
+              const Text('crossAxisAlignment — вдоль поперечной оси'),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final value in const [
+                    CrossAxisAlignment.start,
+                    CrossAxisAlignment.center,
+                    CrossAxisAlignment.end,
+                  ])
+                    ChoiceChip(
+                      key: ValueKey('cross-${value.name}'),
+                      label: Text(value.name),
+                      selected: _cross == value,
+                      onSelected: (_) => setState(() => _cross = value),
+                    ),
+                ],
+              ),
+            ] else ...[
+              const Text('alignment — выравнивание детей без Positioned'),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final entry in const {
+                    'topLeft': Alignment.topLeft,
+                    'center': Alignment.center,
+                    'bottomRight': Alignment.bottomRight,
+                  }.entries)
+                    ChoiceChip(
+                      label: Text(entry.key),
+                      selected: _stackAlignment == entry.value,
+                      onSelected: (_) =>
+                          setState(() => _stackAlignment = entry.value),
+                    ),
+                ],
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('C через Positioned'),
+                subtitle: const Text('top: 16, right: 16 относительно Stack'),
+                value: _positioned,
+                onChanged: (value) => setState(() => _positioned = value),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Поменять слои A и B'),
+                value: _reverse,
+                onChanged: (value) => setState(() => _reverse = value),
+              ),
+            ],
             const SizedBox(height: 20),
             Text('Код примера', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             SelectableText(
-              'ConstrainedBox(\n'
-              '  constraints: $_constraintsCode,\n'
-              '  child: SizedBox(\n'
-              '    width: ${_requestedSize.round()},\n'
-              '    height: ${_requestedSize.round()},\n'
-              '    child: ColoredBox(color: Colors.blue),\n'
-              '  ),\n'
-              ')',
+              _code,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
             ),
             const Text(
-              'В приложении этот фрагмент находится внутри Center в области '
-              '240 × 240. В другом окружении результат может отличаться: '
-              'ConstrainedBox учитывает и ограничения своего родителя.',
+              'blockA, blockB и blockC — цветные блоки из класса '
+              'DemoBlock. Пример находится в SizedBox 240 × 240.',
             ),
             const SizedBox(height: 20),
             const Text(
-              'Проверь себя: при запросе 240 × 240 во всех трёх режимах '
-              'получается 200 × 160. Почему? А что получится при запросе 40 × 40?',
+              'Проверь себя: выбери spaceBetween в Row, затем Column. '
+              'Почему промежутки поменяли направление? В Stack включи '
+              'Positioned и меняй alignment. Почему C больше не перемещается?',
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class DemoBlock extends StatelessWidget {
+  const DemoBlock({
+    super.key,
+    required this.id,
+    required this.width,
+    required this.height,
+    required this.color,
+  });
+
+  final String id;
+  final double width;
+  final double height;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    key: ValueKey('block-$id'),
+    width: width,
+    height: height,
+    child: ColoredBox(
+      color: color,
+      child: Center(
+        child: Text(id, style: const TextStyle(color: Colors.white)),
+      ),
+    ),
+  );
 }
