@@ -9,116 +9,145 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => const MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Learning App',
-    home: ScrollingLessonScreen(),
+    home: ListsGridsLessonScreen(),
   );
 }
 
-class ScrollingLessonScreen extends StatefulWidget {
-  const ScrollingLessonScreen({super.key});
+enum CollectionMode { list, separated, grid }
+
+class ListsGridsLessonScreen extends StatefulWidget {
+  const ListsGridsLessonScreen({super.key});
 
   @override
-  State<ScrollingLessonScreen> createState() => _ScrollingLessonScreenState();
+  State<ListsGridsLessonScreen> createState() => _ListsGridsLessonScreenState();
 }
 
-class _ScrollingLessonScreenState extends State<ScrollingLessonScreen> {
-  Axis _axis = Axis.vertical;
-  bool _longContent = true;
+class _ListsGridsLessonScreenState extends State<ListsGridsLessonScreen> {
+  CollectionMode _mode = CollectionMode.list;
+  int _columns = 2;
+  // Выбор хранится отдельно от лениво создаваемых ячеек.
+  final Set<int> _selected = {};
+
+  String get _code => switch (_mode) {
+    CollectionMode.list =>
+      'ListView.builder(\n'
+          '  controller: controller,\n  primary: false,\n'
+          '  padding: EdgeInsets.all(8),\n'
+          '  itemCount: 60,\n  itemExtent: 72,\n'
+          '  itemBuilder: (context, index) => buildItem(index),\n)',
+    CollectionMode.separated =>
+      'ListView.separated(\n'
+          '  controller: controller,\n  primary: false,\n'
+          '  padding: EdgeInsets.all(8),\n  itemCount: 60,\n'
+          '  itemBuilder: (context, index) => buildItem(index),\n'
+          '  separatorBuilder: (context, index) =>\n'
+          '      Divider(height: 8),\n)',
+    CollectionMode.grid =>
+      'GridView.builder(\n'
+          '  controller: controller,\n  primary: false,\n'
+          '  padding: EdgeInsets.all(8),\n  itemCount: 60,\n'
+          '  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(\n'
+          '    crossAxisCount: $_columns,\n'
+          '    mainAxisSpacing: 8,\n    crossAxisSpacing: 8,\n'
+          '    childAspectRatio: 1,\n  ),\n'
+          '  itemBuilder: (context, index) => buildItem(index),\n)',
+  };
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('05 · Scrolling')),
+    appBar: AppBar(title: const Text('06 · Lists & Grids')),
     body: SafeArea(
       child: ListView(
         key: const ValueKey('lesson-scroll'),
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Окно меньше содержимого',
+            '60 элементов — без 60 готовых виджетов',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 12),
           const Text(
-            'Viewport — видимая область прокрутки. Здесь это квадрат '
-            '240 × 240. Содержимое может быть длиннее окна: свайп меняет '
-            'scroll offset, а размеры окна остаются прежними.',
+            'builder создаёт ячейки по мере необходимости: '
+            'в видимой области и рядом с ней для кеша. '
+            'Прокрути пример, выбери элементы и смени раскладку.',
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             children: [
               for (final entry in const {
-                Axis.vertical: 'Вертикально',
-                Axis.horizontal: 'Горизонтально',
+                CollectionMode.list: 'Список',
+                CollectionMode.separated: 'Разделители',
+                CollectionMode.grid: 'Сетка',
               }.entries)
                 ChoiceChip(
                   label: Text(entry.value),
-                  selected: _axis == entry.key,
-                  onSelected: (_) => setState(() => _axis = entry.key),
+                  selected: _mode == entry.key,
+                  onSelected: (_) => setState(() => _mode = entry.key),
                 ),
             ],
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Длинное содержимое'),
-            subtitle: Text(_longContent ? '8 × 72 = 576' : '3 × 72 = 216'),
-            value: _longContent,
-            onChanged: (value) => setState(() => _longContent = value),
-          ),
-          ScrollDemo(
-            // Каждый вариант начинает с нулевого смещения и новым controller.
-            key: ValueKey('${_axis.name}-$_longContent'),
-            axis: _axis,
-            count: _longContent ? 8 : 3,
+          if (_mode == CollectionMode.grid)
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final count in [2, 3])
+                  ChoiceChip(
+                    label: Text('$count колонки'),
+                    selected: _columns == count,
+                    onSelected: (_) => setState(() => _columns = count),
+                  ),
+              ],
+            ),
+          Text('Выбрано: ${_selected.length} из 60'),
+          const SizedBox(height: 8),
+          CollectionDemo(
+            key: ValueKey('${_mode.name}-$_columns'),
+            mode: _mode,
+            columns: _columns,
+            selected: _selected,
+            onToggle: (index) => setState(() {
+              if (!_selected.add(index)) _selected.remove(index);
+            }),
           ),
           const Text(
-            'При смене направления или длины пример начинается с нуля. '
-            'Свайп внутри квадрата прокручивает пример, снаружи — страницу урока.',
+            'Нажми на ячейку, чтобы выбрать её. Выбор хранится в State '
+            'экрана и сохраняется после прокрутки и смены раскладки. '
+            'Новая раскладка открывается с начала.',
           ),
           const SizedBox(height: 20),
-          Text(
-            'Как устроен пример',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Код примера', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           SelectableText(
-            'SizedBox(\n'
-            '  width: 240, height: 240,\n'
-            '  child: Scrollbar(\n'
-            '    controller: controller,\n'
-            '    thumbVisibility: true,\n'
-            '    child: SingleChildScrollView(\n'
-            '      controller: controller,\n'
-            '      primary: false,\n'
-            '      scrollDirection: $_axis,\n'
-            '      physics: ClampingScrollPhysics(),\n'
-            '      child: ${_axis == Axis.vertical ? 'Column' : 'Row'}(\n'
-            '        mainAxisSize: MainAxisSize.min,\n'
-            '        children: items, // ${_longContent ? 8 : 3} элементов по 72\n'
-            '      ),\n'
-            '    ),\n'
-            '  ),\n'
-            ')',
+            _code,
             style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
           ),
-          const SizedBox(height: 16),
           const Text(
-            'ScrollController хранится в State и освобождается в dispose. '
-            'Кнопки используют animateTo, а текущий offset читается через '
-            'AnimatedBuilder. Scrollbar показывает положение в содержимом.',
+            'buildItem создаёт ячейку с ValueKey(index), получает '
+            'состояние выбора из Set и передаёт нажатие экрану. '
+            'Список находится в окне высотой 300, шириной до 480.',
           ),
           const SizedBox(height: 16),
           const Text(
-            'Важно про ограничения: окно прокрутки имеет конечный размер, '
-            'но ребёнку разрешён неограниченный максимум вдоль оси прокрутки. '
-            'Внутри этой Column нет Expanded: ему было бы не из чего вычислить '
-            'конечную долю. Expanded снаружи scroll view в ограниченной Column '
-            'может, наоборот, выделить конечную высоту окна.',
+            'itemCount — количество данных; index начинается с 0. '
+            'itemExtent — высота одной строки в вертикальном списке. '
+            'Grid delegate определяет размеры и расположение ячеек сетки. '
+            'При childAspectRatio: 1 ячейки квадратные.',
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Список и сетка уже умеют прокручиваться. '
+            'Не нужно оборачивать длинный ListView в SingleChildScrollView '
+            'и включать shrinkWrap как универсальное исправление: '
+            'это может заставить вычислять размеры большого количества детей. '
+            'Дай списку конечное окно через SizedBox или Expanded.',
           ),
           const SizedBox(height: 20),
           const Text(
-            'Проверь себя: отключи длинное содержимое. Почему кнопка '
-            '«В конец» больше не сдвигает элементы? Верни 8 элементов, '
-            'переключи ось и сравни поведение.',
+            'Проверь себя: выбери первый элемент, перейди в конец, '
+            'затем вернись. Почему выбор сохранился, хотя ячейка могла '
+            'быть удалена из дерева? В сетке переключи 2 и 3 колонки: '
+            'почему изменилась высота квадратной ячейки?',
           ),
         ],
       ),
@@ -126,30 +155,26 @@ class _ScrollingLessonScreenState extends State<ScrollingLessonScreen> {
   );
 }
 
-class ScrollDemo extends StatefulWidget {
-  const ScrollDemo({super.key, required this.axis, required this.count});
+class CollectionDemo extends StatefulWidget {
+  const CollectionDemo({
+    super.key,
+    required this.mode,
+    required this.columns,
+    required this.selected,
+    required this.onToggle,
+  });
 
-  final Axis axis;
-  final int count;
+  final CollectionMode mode;
+  final int columns;
+  final Set<int> selected;
+  final ValueChanged<int> onToggle;
 
   @override
-  State<ScrollDemo> createState() => _ScrollDemoState();
+  State<CollectionDemo> createState() => _CollectionDemoState();
 }
 
-class _ScrollDemoState extends State<ScrollDemo> {
-  // Один controller обслуживает только внутреннюю область примера.
+class _CollectionDemoState extends State<CollectionDemo> {
   final _controller = ScrollController(keepScrollOffset: false);
-
-  void _scrollTo({required bool end}) {
-    if (!_controller.hasClients || !_controller.position.hasContentDimensions) {
-      return;
-    }
-    _controller.animateTo(
-      end ? _controller.position.maxScrollExtent : 0,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOut,
-    );
-  }
 
   @override
   void dispose() {
@@ -157,78 +182,111 @@ class _ScrollDemoState extends State<ScrollDemo> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      for (var index = 1; index <= widget.count; index++)
-        SizedBox(
-          key: ValueKey('item-$index'),
-          width: widget.axis == Axis.horizontal ? 72 : 240,
-          height: widget.axis == Axis.vertical ? 72 : 240,
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: ColoredBox(
-              color: index.isOdd
-                  ? const Color(0xFF1565C0)
-                  : const Color(0xFF2E7D32),
-              child: Center(
-                child: Text(
-                  '№ $index',
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ),
-            ),
+  Widget _buildItem(BuildContext context, int index) {
+    final selected = widget.selected.contains(index);
+    final icon = Icon(
+      selected ? Icons.check_circle : Icons.radio_button_unchecked,
+    );
+    return Semantics(
+      key: ValueKey('item-$index'),
+      selected: selected,
+      child: SizedBox(
+        height: 72,
+        child: Card(
+          margin: const EdgeInsets.all(4),
+          color: selected
+              ? Theme.of(context).colorScheme.secondaryContainer
+              : null,
+          child: InkWell(
+            onTap: () => widget.onToggle(index),
+            child: widget.mode == CollectionMode.grid
+                ? Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [Text('№ ${index + 1}'), icon],
+                    ),
+                  )
+                : ListTile(title: Text('Элемент ${index + 1}'), trailing: icon),
           ),
         ),
-    ];
+      ),
+    );
+  }
+
+  void _goTo(bool end) {
+    if (!_controller.hasClients || !_controller.position.hasContentDimensions) {
+      return;
+    }
+    // У всех строк/ячеек в примере одинаковый размер, extent известен точно.
+    _controller.jumpTo(end ? _controller.position.maxScrollExtent : 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scrollView = switch (widget.mode) {
+      CollectionMode.list => ListView.builder(
+        key: const ValueKey('collection-scroll'),
+        controller: _controller,
+        primary: false,
+        padding: const EdgeInsets.all(8),
+        itemCount: 60,
+        itemExtent: 72,
+        itemBuilder: _buildItem,
+      ),
+      CollectionMode.separated => ListView.separated(
+        key: const ValueKey('collection-scroll'),
+        controller: _controller,
+        primary: false,
+        padding: const EdgeInsets.all(8),
+        itemCount: 60,
+        itemBuilder: _buildItem,
+        separatorBuilder: (context, index) => const Divider(height: 8),
+      ),
+      CollectionMode.grid => GridView.builder(
+        key: const ValueKey('collection-scroll'),
+        controller: _controller,
+        primary: false,
+        padding: const EdgeInsets.all(8),
+        itemCount: 60,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.columns,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1,
+        ),
+        itemBuilder: _buildItem,
+      ),
+    };
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Center(
-          child: SizedBox.square(
-            dimension: 240,
-            child: ColoredBox(
-              key: const ValueKey('demo-viewport'),
-              color: const Color(0xFFECEFF1),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: SizedBox(
+              height: 300,
+              width: double.infinity,
               child: Scrollbar(
                 controller: _controller,
                 thumbVisibility: true,
-                child: SingleChildScrollView(
-                  key: const ValueKey('demo-scroll'),
-                  controller: _controller,
-                  primary: false,
-                  scrollDirection: widget.axis,
-                  physics: const ClampingScrollPhysics(),
-                  child: widget.axis == Axis.vertical
-                      ? Column(mainAxisSize: MainAxisSize.min, children: items)
-                      : Row(mainAxisSize: MainAxisSize.min, children: items),
-                ),
+                child: scrollView,
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) => Text(
-            'Смещение: ${(_controller.hasClients ? _controller.offset : 0).round()}',
-            key: const ValueKey('offset-label'),
           ),
         ),
         Wrap(
           spacing: 8,
           children: [
             OutlinedButton(
-              onPressed: () => _scrollTo(end: false),
+              onPressed: () => _goTo(false),
               child: const Text('В начало'),
             ),
             OutlinedButton(
-              onPressed: () => _scrollTo(end: true),
+              onPressed: () => _goTo(true),
               child: const Text('В конец'),
             ),
           ],
         ),
-        const SizedBox(height: 8),
       ],
     );
   }

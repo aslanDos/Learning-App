@@ -1,15 +1,26 @@
 # Flutter: изучаем widgets
 
 Каждую тему разбираем отдельно: концепт → работающий пример → эксперимент → обсуждение.
-Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/05-scrolling`.
+Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/06-lists-grids`.
 
 Запуск: `flutter run`. Если приложение уже запущено после смены ветки, сделай hot restart.
 
-## 05. Scrolling — текущий урок
+## 06. Lists & Grids — текущий урок
+
+Ветка: `lesson/06-lists-grids`. [Конспект](notes/06-lists-grids.md).
+
+60 элементов в ListView.builder, ListView.separated и GridView.builder.
+Меняй число колонок сетки, выбирай элементы и прокручивай до конца.
+Выбор хранится в State экрана и сохраняется после пересоздания ячеек и смены раскладки.
+Сама раскладка при переключении начинает прокрутку с нуля.
+
+Предыдущий пример: `git switch lesson/05-scrolling`.
+
+## 05. Scrolling — предыдущий урок
 
 Ветка: `lesson/05-scrolling`. [Конспект](notes/05-scrolling.md).
 
-Внутри окна 240 × 240 прокручиваем содержимое по вертикали и горизонтали.
+В ветке `lesson/05-scrolling` внутри окна 240 × 240 прокручиваем содержимое по вертикали и горизонтали.
 Переключай 8 и 3 элемента, следи за offset и используй кнопки «В начало» / «В конец».
 Изучаем SingleChildScrollView, ScrollController, Scrollbar и ограничения окна прокрутки.
 При смене варианта смещение сбрасывается в ноль.
@@ -93,7 +104,7 @@ SizedBox(height: 240)       область примера
 3. Row, Column, Stack — `lesson/03-row-column-stack`
 4. Flex — `lesson/04-flex`
 5. Scrolling — `lesson/05-scrolling`
-6. Lists & Grids
+6. Lists & Grids — `lesson/06-lists-grids`
 7. Forms & Inputs
 8. Navigation
 9. Dialogs, Bottom Sheets
