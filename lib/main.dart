@@ -9,120 +9,46 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) => const MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Learning App',
-    home: FlexLessonScreen(),
+    home: ScrollingLessonScreen(),
   );
 }
 
-enum FlexDemo { expanded, flexible, spacer }
-
-class FlexLessonScreen extends StatefulWidget {
-  const FlexLessonScreen({super.key});
+class ScrollingLessonScreen extends StatefulWidget {
+  const ScrollingLessonScreen({super.key});
 
   @override
-  State<FlexLessonScreen> createState() => _FlexLessonScreenState();
+  State<ScrollingLessonScreen> createState() => _ScrollingLessonScreenState();
 }
 
-class _FlexLessonScreenState extends State<FlexLessonScreen> {
-  FlexDemo _mode = FlexDemo.expanded;
-  Axis _axis = Axis.horizontal;
-  int _secondFlex = 2;
-
-  List<Widget> get _children {
-    const a = SizeBlock(id: 'A', desiredSize: 48, color: Color(0xFF1565C0));
-    const b = SizeBlock(id: 'B', desiredSize: 40, color: Color(0xFFC62828));
-    const c = SizeBlock(id: 'C', desiredSize: 48, color: Color(0xFF2E7D32));
-    return switch (_mode) {
-      FlexDemo.expanded => [
-        a,
-        const Expanded(child: b),
-        Expanded(flex: _secondFlex, child: c),
-      ],
-      FlexDemo.flexible => [
-        a,
-        const Flexible(fit: FlexFit.loose, child: b),
-        Expanded(flex: _secondFlex, child: c),
-      ],
-      FlexDemo.spacer => [a, const Spacer(), b, Spacer(flex: _secondFlex), c],
-    };
-  }
-
-  String get _code {
-    final children = switch (_mode) {
-      FlexDemo.expanded =>
-        '    blockA,\n'
-            '    Expanded(flex: 1, child: blockB),\n'
-            '    Expanded(flex: $_secondFlex, child: blockC),\n',
-      FlexDemo.flexible =>
-        '    blockA,\n'
-            '    Flexible(flex: 1, fit: FlexFit.loose,\n      child: blockB),\n'
-            '    Expanded(flex: $_secondFlex, child: blockC),\n',
-      FlexDemo.spacer =>
-        '    blockA,\n'
-            '    Spacer(flex: 1),\n'
-            '    blockB,\n'
-            '    Spacer(flex: $_secondFlex),\n'
-            '    blockC,\n',
-    };
-    return 'Flex(\n  direction: $_axis,\n'
-        '  mainAxisAlignment: MainAxisAlignment.start,\n'
-        '  crossAxisAlignment: CrossAxisAlignment.center,\n'
-        '  children: [\n$children  ],\n)';
-  }
-
-  String get _explanation {
-    if (_mode == FlexDemo.spacer) {
-      return 'Блоки занимают 48 + 40 + 48 = 136. Остаток 104 делят '
-          'два Spacer в пропорции 1 : $_secondFlex. Серые промежутки '
-          'растут, размеры блоков сохраняются.';
-    }
-    final firstShare = 192 / (1 + _secondFlex);
-    final secondShare = firstShare * _secondFlex;
-    return 'Сначала A занимает 48. Остаток 240 − 48 = 192 делится '
-        'в пропорции 1 : $_secondFlex.\n'
-        'Доля B: ${firstShare.toStringAsFixed(1)}; '
-        'доля C: ${secondShare.toStringAsFixed(1)}.\n'
-        '${_mode == FlexDemo.expanded ? 'Expanded заставляет B и C заполнить свои доли.' : 'Flexible разрешает B занять меньше своей доли. B просит 40; C всё равно получает свою исходную долю. Остаток B не передаётся C.'}';
-  }
+class _ScrollingLessonScreenState extends State<ScrollingLessonScreen> {
+  Axis _axis = Axis.vertical;
+  bool _longContent = true;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('04 · Flex')),
+    appBar: AppBar(title: const Text('05 · Scrolling')),
     body: SafeArea(
       child: ListView(
+        key: const ValueKey('lesson-scroll'),
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Как поделить свободное место',
+            'Окно меньше содержимого',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 12),
           const Text(
-            'Flex — общий виджет для ряда и столбца. '
-            'Axis.horizontal соответствует Row, Axis.vertical — Column. '
-            'Доли flex распределяются вдоль главной оси.',
+            'Viewport — видимая область прокрутки. Здесь это квадрат '
+            '240 × 240. Содержимое может быть длиннее окна: свайп меняет '
+            'scroll offset, а размеры окна остаются прежними.',
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             children: [
               for (final entry in const {
-                FlexDemo.expanded: 'Expanded',
-                FlexDemo.flexible: 'Flexible',
-                FlexDemo.spacer: 'Spacer',
-              }.entries)
-                ChoiceChip(
-                  label: Text(entry.value),
-                  selected: _mode == entry.key,
-                  onSelected: (_) => setState(() => _mode = entry.key),
-                ),
-            ],
-          ),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final entry in const {
-                Axis.horizontal: 'Горизонтально',
                 Axis.vertical: 'Вертикально',
+                Axis.horizontal: 'Горизонтально',
               }.entries)
                 ChoiceChip(
                   label: Text(entry.value),
@@ -131,59 +57,68 @@ class _FlexLessonScreenState extends State<FlexLessonScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: SizedBox.square(
-              dimension: 240,
-              child: ColoredBox(
-                key: const ValueKey('demo-area'),
-                color: const Color(0xFFECEFF1),
-                child: Flex(
-                  direction: _axis,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: _children,
-                ),
-              ),
-            ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Длинное содержимое'),
+            subtitle: Text(_longContent ? '8 × 72 = 576' : '3 × 72 = 216'),
+            value: _longContent,
+            onChanged: (value) => setState(() => _longContent = value),
           ),
-          const SizedBox(height: 8),
+          ScrollDemo(
+            // Каждый вариант начинает с нулевого смещения и новым controller.
+            key: ValueKey('${_axis.name}-$_longContent'),
+            axis: _axis,
+            count: _longContent ? 8 : 3,
+          ),
           const Text(
-            'Внутри блоков — фактическая ширина × высота. '
-            'Изначально A и C просят 48 × 48, B — 40 × 40.',
+            'При смене направления или длины пример начинается с нуля. '
+            'Свайп внутри квадрата прокручивает пример, снаружи — страницу урока.',
           ),
-          const SizedBox(height: 12),
-          Text(
-            _mode == FlexDemo.spacer
-                ? 'flex второго Spacer: $_secondFlex'
-                : 'flex блока C: $_secondFlex',
-          ),
-          Slider(
-            key: const ValueKey('flex-slider'),
-            value: _secondFlex.toDouble(),
-            min: 1,
-            max: 3,
-            divisions: 2,
-            label: '$_secondFlex',
-            onChanged: (value) => setState(() => _secondFlex = value.round()),
-          ),
-          Text(_explanation),
           const SizedBox(height: 20),
-          Text('Код примера', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Как устроен пример',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           SelectableText(
-            _code,
+            'SizedBox(\n'
+            '  width: 240, height: 240,\n'
+            '  child: Scrollbar(\n'
+            '    controller: controller,\n'
+            '    thumbVisibility: true,\n'
+            '    child: SingleChildScrollView(\n'
+            '      controller: controller,\n'
+            '      primary: false,\n'
+            '      scrollDirection: $_axis,\n'
+            '      physics: ClampingScrollPhysics(),\n'
+            '      child: ${_axis == Axis.vertical ? 'Column' : 'Row'}(\n'
+            '        mainAxisSize: MainAxisSize.min,\n'
+            '        children: items, // ${_longContent ? 8 : 3} элементов по 72\n'
+            '      ),\n'
+            '    ),\n'
+            '  ),\n'
+            ')',
             style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
           ),
+          const SizedBox(height: 16),
           const Text(
-            'blockA, blockB и blockC — экземпляры SizeBlock. '
-            'Весь Flex помещён в SizedBox 240 × 240.',
+            'ScrollController хранится в State и освобождается в dispose. '
+            'Кнопки используют animateTo, а текущий offset читается через '
+            'AnimatedBuilder. Scrollbar показывает положение в содержимом.',
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Важно про ограничения: окно прокрутки имеет конечный размер, '
+            'но ребёнку разрешён неограниченный максимум вдоль оси прокрутки. '
+            'Внутри этой Column нет Expanded: ему было бы не из чего вычислить '
+            'конечную долю. Expanded снаружи scroll view в ограниченной Column '
+            'может, наоборот, выделить конечную высоту окна.',
           ),
           const SizedBox(height: 20),
           const Text(
-            'Проверь себя: сравни Expanded и Flexible при пропорции '
-            '1 : 2. Почему C не увеличился, когда B стал меньше? '
-            'Включи Spacer: что теперь получает доли свободного места?',
+            'Проверь себя: отключи длинное содержимое. Почему кнопка '
+            '«В конец» больше не сдвигает элементы? Верни 8 элементов, '
+            'переключи ось и сравни поведение.',
           ),
         ],
       ),
@@ -191,38 +126,110 @@ class _FlexLessonScreenState extends State<FlexLessonScreen> {
   );
 }
 
-class SizeBlock extends StatelessWidget {
-  const SizeBlock({
-    super.key,
-    required this.id,
-    required this.desiredSize,
-    required this.color,
-  });
+class ScrollDemo extends StatefulWidget {
+  const ScrollDemo({super.key, required this.axis, required this.count});
 
-  final String id;
-  final double desiredSize;
-  final Color color;
+  final Axis axis;
+  final int count;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: desiredSize,
-    height: desiredSize,
-    child: ColoredBox(
-      key: ValueKey('block-$id'),
-      color: color,
-      child: LayoutBuilder(
-        builder: (context, limits) => Padding(
-          padding: const EdgeInsets.all(3),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              '$id\n${limits.maxWidth.round()} × ${limits.maxHeight.round()}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white),
+  State<ScrollDemo> createState() => _ScrollDemoState();
+}
+
+class _ScrollDemoState extends State<ScrollDemo> {
+  // Один controller обслуживает только внутреннюю область примера.
+  final _controller = ScrollController(keepScrollOffset: false);
+
+  void _scrollTo({required bool end}) {
+    if (!_controller.hasClients || !_controller.position.hasContentDimensions) {
+      return;
+    }
+    _controller.animateTo(
+      end ? _controller.position.maxScrollExtent : 0,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      for (var index = 1; index <= widget.count; index++)
+        SizedBox(
+          key: ValueKey('item-$index'),
+          width: widget.axis == Axis.horizontal ? 72 : 240,
+          height: widget.axis == Axis.vertical ? 72 : 240,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: ColoredBox(
+              color: index.isOdd
+                  ? const Color(0xFF1565C0)
+                  : const Color(0xFF2E7D32),
+              child: Center(
+                child: Text(
+                  '№ $index',
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    ),
-  );
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: SizedBox.square(
+            dimension: 240,
+            child: ColoredBox(
+              key: const ValueKey('demo-viewport'),
+              color: const Color(0xFFECEFF1),
+              child: Scrollbar(
+                controller: _controller,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  key: const ValueKey('demo-scroll'),
+                  controller: _controller,
+                  primary: false,
+                  scrollDirection: widget.axis,
+                  physics: const ClampingScrollPhysics(),
+                  child: widget.axis == Axis.vertical
+                      ? Column(mainAxisSize: MainAxisSize.min, children: items)
+                      : Row(mainAxisSize: MainAxisSize.min, children: items),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) => Text(
+            'Смещение: ${(_controller.hasClients ? _controller.offset : 0).round()}',
+            key: const ValueKey('offset-label'),
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          children: [
+            OutlinedButton(
+              onPressed: () => _scrollTo(end: false),
+              child: const Text('В начало'),
+            ),
+            OutlinedButton(
+              onPressed: () => _scrollTo(end: true),
+              child: const Text('В конец'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
 }

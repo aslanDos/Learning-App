@@ -1,15 +1,26 @@
 # Flutter: изучаем widgets
 
 Каждую тему разбираем отдельно: концепт → работающий пример → эксперимент → обсуждение.
-Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/04-flex`.
+Ветки уроков создаём по мере прохождения. Текущий урок: `lesson/05-scrolling`.
 
 Запуск: `flutter run`. Если приложение уже запущено после смены ветки, сделай hot restart.
 
-## 04. Flex — текущий урок
+## 05. Scrolling — текущий урок
+
+Ветка: `lesson/05-scrolling`. [Конспект](notes/05-scrolling.md).
+
+Внутри окна 240 × 240 прокручиваем содержимое по вертикали и горизонтали.
+Переключай 8 и 3 элемента, следи за offset и используй кнопки «В начало» / «В конец».
+Изучаем SingleChildScrollView, ScrollController, Scrollbar и ограничения окна прокрутки.
+При смене варианта смещение сбрасывается в ноль.
+
+Предыдущий пример: `git switch lesson/04-flex`.
+
+## 04. Flex — предыдущий урок
 
 Ветка: `lesson/04-flex`. [Конспект](notes/04-flex.md).
 
-Сравни Expanded, Flexible и Spacer. Меняй направление Flex и коэффициент второй доли.
+В ветке `lesson/04-flex` сравни Expanded, Flexible и Spacer. Меняй направление Flex и коэффициент второй доли.
 Внутри цветных блоков показаны фактические размеры; под примером — расчёт долей и код.
 Обрати внимание: неиспользованное место Flexible не передаётся соседнему Expanded автоматически.
 
@@ -81,7 +92,7 @@ SizedBox(height: 240)       область примера
 2. Constraints — `lesson/02-constraints`
 3. Row, Column, Stack — `lesson/03-row-column-stack`
 4. Flex — `lesson/04-flex`
-5. Scrolling
+5. Scrolling — `lesson/05-scrolling`
 6. Lists & Grids
 7. Forms & Inputs
 8. Navigation
